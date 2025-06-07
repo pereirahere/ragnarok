@@ -1,0 +1,9 @@
+# Model configurations
+models:
+  llm: gemma3:12b
+  embedding: mxbai-embed-large
+
+# List of repositories to index.
+repositories:
+  - name: insert_arbitrary_repo_name_here
+    path: /full/path/to/repo
