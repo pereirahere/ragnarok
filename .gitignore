@@ -3,3 +3,4 @@ config.yml
 .python-version
 .claude
 .DS_Store
+ragnarok_venv/
