@@ -1,5 +1,6 @@
 # build_indexes.py
 
+import argparse
 import pathlib
 import yaml
 from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
@@ -11,7 +12,7 @@ from loaders.loader_factory import LoaderFactory
 FAISS_ROOT_DIR = pathlib.Path("faiss_indexes")
 CONFIG_PATH = "config.yml"
 
-def build_index_for_repo(repo_name: str, repo_path: str, embedding_model: str):
+def build_index_for_repo(repo_name: str, repo_path: str, embedding_model: str, language_filter: str = None):
     """Builds and saves a FAISS index for a single repository using the loader factory."""
     
     index_dir = FAISS_ROOT_DIR / repo_name
@@ -19,12 +20,36 @@ def build_index_for_repo(repo_name: str, repo_path: str, embedding_model: str):
 
     # 1. Instantiate the factory and define desired loaders
     loader_factory = LoaderFactory(repo_path)
-    desired_loader_types = [
-        Language.JAVA,
-        Language.PYTHON,
-        Language.JS,
-        "general_unstructured"
-    ]
+    
+    # Language filter mapping
+    language_mapping = {
+        "java": Language.JAVA,
+        "python": Language.PYTHON,
+        "javascript": Language.JS,
+        "js": Language.JS
+    }
+    
+    if language_filter:
+        # Filter for specific language
+        if language_filter.lower() in language_mapping:
+            desired_loader_types = [language_mapping[language_filter.lower()]]
+            print(f"Filtering for language: {language_filter}")
+        else:
+            print(f"Warning: Unknown language filter '{language_filter}'. Available: java, python, javascript/js")
+            desired_loader_types = [
+                Language.JAVA,
+                Language.PYTHON,
+                Language.JS,
+                "general_unstructured"
+            ]
+    else:
+        # Default: all supported languages
+        desired_loader_types = [
+            Language.JAVA,
+            Language.PYTHON,
+            Language.JS,
+            "general_unstructured"
+        ]
     
     # 2. Load all documents by iterating through the desired loaders
     all_docs = []
@@ -70,6 +95,12 @@ def build_index_for_repo(repo_name: str, repo_path: str, embedding_model: str):
 
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Build FAISS indexes for repositories")
+    parser.add_argument("--lf", "--language-filter", dest="language_filter", 
+                       help="Filter by language (java, python, javascript/js)")
+    args = parser.parse_args()
+    
     FAISS_ROOT_DIR.mkdir(exist_ok=True)
 
     with open(CONFIG_PATH, "r") as f:
@@ -85,7 +116,7 @@ if __name__ == "__main__":
         repo_name = repo.get("name")
         repo_path = repo.get("path")
         if repo_name and repo_path:
-            build_index_for_repo(repo_name, repo_path, embedding_model_name)
+            build_index_for_repo(repo_name, repo_path, embedding_model_name, args.language_filter)
         else:
             print(f"WARNING: Skipping invalid repository entry in config.yml: {repo}")
     
