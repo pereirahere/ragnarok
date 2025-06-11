@@ -79,6 +79,7 @@ async def on_chat_start():
 
         emb = OllamaEmbeddings(model=EMB_MODEL)
         list_of_retrievers = []
+        loaded_repo_names = []
 
         for repo in repo_configs:
             repo_name = repo.get("name")
@@ -87,6 +88,7 @@ async def on_chat_start():
                 db = FAISS.load_local(str(index_dir), emb, allow_dangerous_deserialization=True)
                 retriever = db.as_retriever(search_kwargs={'k': 5})
                 list_of_retrievers.append(retriever)
+                loaded_repo_names.append(repo_name)
             else:
                 await cl.Message(content=f"Warning: Index for repo '{repo_name}' not found. Please run `build_indexes.py`.").send()
 
@@ -96,7 +98,8 @@ async def on_chat_start():
                 llm=llm, chain_type="stuff", retriever=ensemble_retriever
             )
             cl.user_session.set("rag_chain", rag_chain)
-            await cl.Message(content=f"Ready to answer questions about {len(list_of_retrievers)} repositories!").send()
+            repo_list = ", ".join(loaded_repo_names)
+            await cl.Message(content=f"Ready to answer questions about {len(list_of_retrievers)} repositories: {repo_list}").send()
         else:
             await cl.Message(content="No valid repository indexes were loaded.").send()
     else:
