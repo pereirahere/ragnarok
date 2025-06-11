@@ -1,0 +1,5 @@
+faiss_indexes/*/
+config.yml
+.python-version
+.claude
+.DS_Store
