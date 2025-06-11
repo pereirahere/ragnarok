@@ -1,6 +1,9 @@
 faiss_indexes/*/
+ragnarok_venv/
+
 config.yml
+CLAUDE.md
+
 .python-version
 .claude
 .DS_Store
-ragnarok_venv/
